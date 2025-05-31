@@ -1,44 +1,70 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>RTP Audio Waveform</title>
-    <style>
-        canvas { width: 100%; height: 300px; background: #000; }
-    </style>
+  <meta charset="UTF-8">
+  <title>RTP Audio Waveform</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      background: #000;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
 </head>
 <body>
-<canvas id="waveform"></canvas>
-<script>
+  <canvas id="waveform"></canvas>
+
+  <script>
     const canvas = document.getElementById('waveform');
     const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = 300;
 
-    const socket = new WebSocket('ws://localhost:8080/ws');
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas(); // 初始化尺寸
+
+    const socket = new WebSocket('ws://localhost:8765');
     socket.binaryType = 'arraybuffer';
 
     socket.onmessage = function (event) {
-        const data = new Int16Array(event.data);
-        drawWaveform(data);
+      const data = new Int16Array(event.data);
+      drawWaveform(data);
     };
 
     function drawWaveform(samples) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = 'lime';
-        ctx.beginPath();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'lime';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
 
-        const midY = canvas.height / 2;
-        const scaleX = canvas.width / samples.length;
-        const scaleY = canvas.height / 65536;
+      const midY = canvas.height / 2;
+      const scaleX = canvas.width / samples.length;
+      const scaleY = canvas.height / 65536 * 2;
 
-        for (let i = 0; i < samples.length; i++) {
-            const x = i * scaleX;
-            const y = midY - samples[i] * scaleY;
-            ctx.lineTo(x, y);
-        }
+      ctx.moveTo(0, midY);
+      for (let i = 0; i < samples.length; i++) {
+        const x = i * scaleX;
+        const y = midY - samples[i] * scaleY;
+        ctx.lineTo(x, y);
+      }
 
-        ctx.stroke();
+      ctx.stroke();
     }
-</script>
+  </script>
 </body>
 </html>
