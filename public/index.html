@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RTP Audio Waveform</title>
+    <style>
+        canvas { width: 100%; height: 300px; background: #000; }
+    </style>
+</head>
+<body>
+<canvas id="waveform"></canvas>
+<script>
+    const canvas = document.getElementById('waveform');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = 300;
+
+    const socket = new WebSocket('ws://localhost:8080/ws');
+    socket.binaryType = 'arraybuffer';
+
+    socket.onmessage = function (event) {
+        const data = new Int16Array(event.data);
+        drawWaveform(data);
+    };
+
+    function drawWaveform(samples) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = 'lime';
+        ctx.beginPath();
+
+        const midY = canvas.height / 2;
+        const scaleX = canvas.width / samples.length;
+        const scaleY = canvas.height / 65536;
+
+        for (let i = 0; i < samples.length; i++) {
+            const x = i * scaleX;
+            const y = midY - samples[i] * scaleY;
+            ctx.lineTo(x, y);
+        }
+
+        ctx.stroke();
+    }
+</script>
+</body>
+</html>
